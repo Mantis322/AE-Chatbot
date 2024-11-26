@@ -11,6 +11,10 @@ AE Transfer Chatbot revolutionizes blockchain interactions by combining the simp
 - **User-Friendly**: No technical knowledge required
 - **Real-Time Updates**: Instant transaction notifications and status updates
 
+## 📋 Contract Details
+- **Network**: Testnet
+- **Contract**: [ct_2n5V3r9RDEWRhwEzLSbhhT8ah2eY3AJtH4bKNckgo2zmvNHEC6](https://testnet.aescan.io/contracts/ct_2n5V3r9RDEWRhwEzLSbhhT8ah2eY3AJtH4bKNckgo2zmvNHEC6)
+
 ## 🤖 Currently Available Commands
 
 - `send X AE to ak_...` - Send tokens to an address
