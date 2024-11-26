@@ -1,0 +1,76 @@
+// SecurityLayer.aes
+contract SecurityLayer =
+
+  record state = {
+    owner: address,
+    user_limits: map(address, int),   
+    daily_totals: map(address, int),  
+    last_reset: map(address, int),    
+    risk_scores: map(address, int),   
+    two_fa_enabled: map(address, bool), 
+    user_emails: map(address, string)
+    }
+
+  stateful entrypoint init() = {
+    owner = Call.caller,
+    user_limits = {},
+    daily_totals = {},
+    last_reset = {},
+    risk_scores = {},
+    two_fa_enabled = {},
+    user_emails = {}
+    }
+
+  stateful entrypoint set_user_limit( limit: int) =
+    require(Call.caller == state.owner, "Only owner can set limits")
+    put(state{ user_limits[Call.caller] = limit })
+
+  stateful entrypoint set_email( email: string) =
+    require(Call.caller == state.owner, "Only owner can set emails") // Yalnızca sahip e-posta atayabilir
+    put(state{ user_emails[Call.caller] = email })
+
+
+  entrypoint get_email() : string =
+    require(state.two_fa_enabled[Call.caller] == true, "2FA must be enabled to view email")
+    require(Call.caller == state.owner, "You can only view your own email or the owner's email")
+    Map.lookup_default(Call.caller, state.user_emails, "Email not set")
+
+
+  stateful entrypoint toggle_two_fa(enabled: bool) =
+    put(state{ two_fa_enabled[Call.caller] = enabled })
+
+  entrypoint is_two_fa_enabled() : bool =
+    Map.lookup_default(Call.caller, state.two_fa_enabled, false)
+
+  entrypoint check_transaction( amount: int) : bool =
+    let daily_total = Map.lookup_default(Call.caller, state.daily_totals, 0)
+    let user_limit = Map.lookup_default(Call.caller, state.user_limits, 1000000) // Varsayılan limit
+    let risk_score = calculate_risk_score(amount)
+
+
+    if(daily_total + amount > user_limit)
+      false
+
+    elif(risk_score > 80)
+      false
+    else
+      true
+ 
+  function calculate_risk_score( amount: int) : int =
+    let base_score = 
+      if(amount > 10000) 
+        80  
+      elif(amount > 5000)
+        50  
+      else 
+        20 
+
+    let user_risk = Map.lookup_default(Call.caller, state.risk_scores, 0)
+    (base_score + user_risk) / 2
+
+
+  stateful entrypoint reset_daily_total() =
+    let last = Map.lookup_default(Call.caller, state.last_reset, 0)
+    if(Chain.timestamp - last > 86400000) 
+      put(state{ daily_totals[Call.caller] = 0,
+                 last_reset[Call.caller] = Chain.timestamp })
