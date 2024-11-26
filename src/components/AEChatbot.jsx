@@ -365,27 +365,6 @@ const AEChatbot = () => {
         }
     };
 
-    const ensureContract = async () => {
-        if (!contract && sdk) {
-            try {
-                const contractInstance = await Contract.initialize(
-                    {
-                        ...sdk.getContext(),
-                        sourceCode: CONTRACT_SOURCE_CODE,
-                        client: sdk,
-                        onAccount: sdk,
-                        address: CONTRACT_ADDRESS,
-                    },
-                );
-                setContract(contractInstance);
-                return contractInstance;
-            } catch (error) {
-                console.error('Error ensuring contract:', error);
-                throw error;
-            }
-        }
-        return contract;
-    };
 
     const handleTwoFAToggle = async (checked) => {
         try {
@@ -699,47 +678,10 @@ const AEChatbot = () => {
 
     // İşlem geçmişi
     const getTransactionHistory = async () => {
-        try {
-            setIsLoading(true);
-            addMessage('bot-loading', 'Fetching your transaction history...');
-
-            const response = await fetch(
-                `https://testnet.aeternity.io/mdw/v2/accounts/${userAddress}/transactions`
-            );
-            const data = await response.json();
-
-            setMessages(prev => prev.filter(msg => msg.type !== 'bot-loading'));
-
-            if (data.data && data.data.length > 0) {
-                addMessage('bot', 'Here are your last 5 transactions:');
-
-                const lastFiveTransactions = data.data.slice(0, 5);
-                lastFiveTransactions.forEach(tx => {
-                    const amount = tx.tx.amount ? (tx.tx.amount / 1e18).toFixed(4) : '0';
-                    const type = tx.tx.type;
-                    const direction = tx.tx.sender_id === userAddress ? 'Sent' : 'Received';
-
-                    const txMessage = `${direction} ${amount} AE\n` +
-                        `Type: ${type}\n` +
-                        `Hash: ${tx.hash.slice(0, 8)}...${tx.hash.slice(-4)}`;
-
-                    addMessage('bot-link', {
-                        text: txMessage,
-                        url: networkId === 'ae_mainnet'
-                            ? `https://explorer.aeternity.io/transactions/${tx.hash}`
-                            : `https://testnet.aescan.io/transactions/${tx.hash}`
-                    });
-                });
-            } else {
-                addMessage('bot', 'No transactions found in your history.');
-            }
-
-        } catch (error) {
-            setMessages(prev => prev.filter(msg => msg.type !== 'bot-loading'));
-            addMessage('bot', `Error fetching transaction history: ${error.message}`);
-        } finally {
-            setIsLoading(false);
-        }
+        addMessage('bot-link', {
+            text: '📜 View all your transactions in the explorer',
+            url: `https://testnet.aescan.io/accounts/${userAddress}`
+        });
     };
 
     // QR kod oluşturma
