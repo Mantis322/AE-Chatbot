@@ -42,8 +42,8 @@ const AEChatbot = () => {
     const [emailError, setEmailError] = useState('');
     const [currentEmail, setCurrentEmail] = useState('');
     const [contract, setContract] = useState(null);
-    const [recipientAddress, setRecipientAddress] = useState('');
-    const [transferAmount, setTransferAmount] = useState('');
+    const [recipientAddress, setRecipientAddress] = useState();
+    const [transferAmount, setTransferAmount] = useState();
 
     // Security states
     const [isTwoFAEnabled, setIsTwoFAEnabled] = useState(false);
@@ -231,8 +231,8 @@ const AEChatbot = () => {
                         const nodes = await aeSdk.getNodesInPool();
                         const [{ name }] = nodes.filter((node) => node.nodeNetworkId === networkId);
                         await aeSdk.selectNode(name);
-                        console.log('Network changed:', networkId); // Debug için log
-                        setNetworkId(networkId); // networkId state'ini güncelle
+                        console.log('Network changed:', networkId); 
+                        setNetworkId(networkId); 
                     } catch (error) {
                         console.error('Network change error:', error);
                     }
@@ -491,8 +491,6 @@ const AEChatbot = () => {
                 amountInAettos
             );
 
-            console.log(securityCheck)
-
             if (!securityCheck) {
                 addMessage('bot', '❌ Security check failed: The transaction exceeds your daily limit or has been flagged as high risk.');
                 return;
@@ -574,8 +572,6 @@ const AEChatbot = () => {
             addMessage('bot', `❌ ${errorMessage}`);
         } finally {
             setIsLoading(false);
-            setRecipientAddress('')
-            setTransferAmount('')
         }
     };
 
@@ -631,8 +627,6 @@ const AEChatbot = () => {
         }, 1000);
 
         setIsLoading(false);
-        setRecipientAddress('')
-        setTransferAmount('')
     };
 
     // 2FA authentication handler (code 123456 in demo process)
