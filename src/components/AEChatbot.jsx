@@ -42,8 +42,8 @@ const AEChatbot = () => {
     const [emailError, setEmailError] = useState('');
     const [currentEmail, setCurrentEmail] = useState('');
     const [contract, setContract] = useState(null);
-    const [recipientAddress, setRecipientAddress] = useState();
-    const [transferAmount, setTransferAmount] = useState();
+    const [recipientAddress, setRecipientAddress] = useState('');
+    const [transferAmount, setTransferAmount] = useState('');
 
     // Security states
     const [isTwoFAEnabled, setIsTwoFAEnabled] = useState(false);
@@ -491,6 +491,8 @@ const AEChatbot = () => {
                 amountInAettos
             );
 
+            console.log(securityCheck)
+
             if (!securityCheck) {
                 addMessage('bot', '❌ Security check failed: The transaction exceeds your daily limit or has been flagged as high risk.');
                 return;
@@ -498,7 +500,6 @@ const AEChatbot = () => {
 
 
             if (isTwoFAEnabled) {
-                setPendingTransaction({ recipientAddress, amount });
                 setShowTwoFAPrompt(true);
                 return;
             } else {
@@ -573,7 +574,8 @@ const AEChatbot = () => {
             addMessage('bot', `❌ ${errorMessage}`);
         } finally {
             setIsLoading(false);
-            setPendingTransaction(null);
+            setRecipientAddress('')
+            setTransferAmount('')
         }
     };
 
@@ -629,7 +631,8 @@ const AEChatbot = () => {
         }, 1000);
 
         setIsLoading(false);
-        setPendingTransaction(null);
+        setRecipientAddress('')
+        setTransferAmount('')
     };
 
     // 2FA authentication handler (code 123456 in demo process)
@@ -1094,7 +1097,6 @@ const AEChatbot = () => {
                                         type="button"
                                         onClick={() => {
                                             setShowTwoFAPrompt(false);
-                                            setPendingTransaction(null);
                                             setVerificationCode('');
                                         }}
                                         variant="outline"
