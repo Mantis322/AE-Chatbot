@@ -16,16 +16,15 @@ import {
 
 // Components
 import LoadingSpinner from './LoadingSpinner';
-import TwoFAPrompt from './security/TwoFAPrompt';
 
 
-// Sabit değişkenler
+// Constants
 const TESTNET_NODE_URL = 'https://testnet.aeternity.io';
 const COMPILER_URL = 'https://v8.compiler.aepps.com';
 const CONTRACT_ADDRESS = "ct_2n5V3r9RDEWRhwEzLSbhhT8ah2eY3AJtH4bKNckgo2zmvNHEC6";
 
 const AEChatbot = () => {
-    // State tanımlamaları
+    // State definitions
     const [showQR, setShowQR] = useState(false);
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
@@ -51,6 +50,7 @@ const AEChatbot = () => {
     const [showTwoFAPrompt, setShowTwoFAPrompt] = useState(false);
     const [showSecuritySettings, setShowSecuritySettings] = useState(false);
 
+    // Contract source code remains unchanged as it's not a comment
     const CONTRACT_SOURCE_CODE = `contract SecurityLayer =
 
   record state = {
@@ -170,7 +170,7 @@ const AEChatbot = () => {
 
 
 
-    // Karşılama mesajları
+     // Welcome messages
     useEffect(() => {
         if (showWelcome) {
             const welcomeMessages = [
@@ -215,7 +215,7 @@ const AEChatbot = () => {
         }
     }, [showWelcome]);
 
-    // Cüzdan bağlantısı
+    // Wallet connection
     const connectWallet = async () => {
         try {
             setIsWalletLoading(true);
@@ -365,7 +365,6 @@ const AEChatbot = () => {
         }
     };
 
-
     const handleTwoFAToggle = async (checked) => {
         try {
             setIsLoading(true);
@@ -457,7 +456,7 @@ const AEChatbot = () => {
         }
     };
 
-    // Transfer işlemi
+    // Process transfer
     const processTransfer = async (recipientAddress, amount) => {
         try {
             setIsLoading(true);
@@ -465,7 +464,7 @@ const AEChatbot = () => {
             setTransferAmount(amount)
             await loadContractData();
 
-            // Temel kontroller
+            // Basic controller
             if (!sdk) {
                 throw new Error('SDK not initialized');
             }
@@ -474,19 +473,19 @@ const AEChatbot = () => {
                 throw new Error('Invalid address format. Address must start with "ak_"');
             }
 
-            // Miktar kontrolü
+            // Amount check
             if (amount <= 0) {
                 throw new Error('Transfer amount must be greater than 0');
             }
 
-            // Bakiye kontrolü
+            // Balance Check
             const balance = await sdk.getBalance(userAddress);
             const balanceInAE = balance / 1e18;
             if (balanceInAE < amount) {
                 throw new Error('Insufficient funds');
             }
 
-            // Güvenlik kontrolü
+
             const amountInAettos = BigInt(amount * 1e18).toString();
             const securityCheck = await contract.check_transaction(
                 amountInAettos
@@ -497,47 +496,44 @@ const AEChatbot = () => {
                 return;
             }
 
-            // 2FA kontrolü
+
             if (isTwoFAEnabled) {
                 setPendingTransaction({ recipientAddress, amount });
                 setShowTwoFAPrompt(true);
                 return;
             } else {
 
-                // Transfer işlemi başlatma
+
                 addMessage('bot-loading', 'Processing transfer...');
 
-                // Transfer işlemini gerçekleştir
                 const result = await sdk.spend(amountInAettos, recipientAddress);
 
-                // Loading mesajını kaldır
                 setMessages(prev => prev.filter(msg => msg.type !== 'bot-loading'));
 
-                // Başarılı transfer mesajı
                 addMessage('bot',
                     `✅ Successfully transferred ${amount} AE to ${recipientAddress.slice(0, 8)}...${recipientAddress.slice(-4)}.\n\n` +
                     `Transaction hash:\n${result.hash}`
                 );
 
-                // Explorer URL'i oluştur
+                // Create Explorer URL
                 const explorerUrl = networkId === 'ae_mainnet'
                     ? `https://explorer.aeternity.io/transactions/${result.hash}`
                     : `https://testnet.aescan.io/transactions/${result.hash}`;
 
-                // Explorer link mesajı
+
                 addMessage('bot-link', {
                     text: 'View transaction in explorer',
                     url: explorerUrl
                 });
 
-                // İşlem sonrası günlük limit güncelleme
+                // Daily limit update after the transaction
                 try {
                     await contract.reset_daily_total();
                 } catch (error) {
                     console.error('Error resetting daily total:', error);
                 }
 
-                // Email bildirimi (eğer email ayarlıysa)
+                // Email notification (under development)
                 try {
                     const userEmail = await securityManager.getUserEmail(userAddress);
                     if (userEmail && userEmail !== 'Email not set') {
@@ -547,18 +543,18 @@ const AEChatbot = () => {
                     console.error('Error sending email notification:', error);
                 }
 
-                // Bakiye güncelleme önerisi
+                // Balance update suggestion
                 setTimeout(() => {
                     addMessage('bot', '💡 Type "show my balance" to see your updated balance.');
                 }, 1000);
             }
 
         } catch (error) {
-            // Loading mesajını kaldır
+
             setMessages(prev => prev.filter(msg => msg.type !== 'bot-loading'));
             console.error('Transfer error:', error);
 
-            // Hata mesajını özelleştir
+
             let errorMessage = 'Transfer failed: ';
             if (error.message.includes('insufficient funds')) {
                 errorMessage += 'Insufficient funds in your wallet.';
@@ -584,40 +580,40 @@ const AEChatbot = () => {
     const executeTransfer = async (recipientAddress, amount) => {
 
         const amountInAettos = BigInt(amount * 1e18).toString();
-        // Transfer işlemi başlatma
+        // Start transfer process
         addMessage('bot-loading', 'Processing transfer...');
 
-        // Transfer işlemini gerçekleştir
+        // Execute transfer
         const result = await sdk.spend(amountInAettos, recipientAddress);
 
-        // Loading mesajını kaldır
+        // Remove loading message
         setMessages(prev => prev.filter(msg => msg.type !== 'bot-loading'));
 
-        // Başarılı transfer mesajı
+        // Successful transfer message
         addMessage('bot',
             `✅ Successfully transferred ${amount} AE to ${recipientAddress.slice(0, 8)}...${recipientAddress.slice(-4)}.\n\n` +
             `Transaction hash:\n${result.hash}`
         );
 
-        // Explorer URL'i oluştur
+        // Create explorer URL
         const explorerUrl = networkId === 'ae_mainnet'
             ? `https://explorer.aeternity.io/transactions/${result.hash}`
             : `https://testnet.aescan.io/transactions/${result.hash}`;
 
-        // Explorer link mesajı
+        // Explorer link message
         addMessage('bot-link', {
             text: 'View transaction in explorer',
             url: explorerUrl
         });
 
-        // İşlem sonrası günlük limit güncelleme
+        // Update daily limit after transaction
         try {
             await contract.reset_daily_total();
         } catch (error) {
             console.error('Error resetting daily total:', error);
         }
 
-        // Email bildirimi (eğer email ayarlıysa)
+        // Email notification (if email is set)
         try {
             const userEmail = await contract.get_email();
             if (userEmail && userEmail !== 'Email not set') {
@@ -627,7 +623,7 @@ const AEChatbot = () => {
             console.error('Error sending email notification:', error);
         }
 
-        // Bakiye güncelleme önerisi
+        // Balance update suggestion
         setTimeout(() => {
             addMessage('bot', '💡 Type "show my balance" to see your updated balance.');
         }, 1000);
@@ -636,7 +632,7 @@ const AEChatbot = () => {
         setPendingTransaction(null);
     };
 
-    // 2FA doğrulama işleyicisi
+    // 2FA authentication handler (code 123456 in demo process)
     const handle2FAVerification = async (code) => {
         try {
 
@@ -656,7 +652,7 @@ const AEChatbot = () => {
             setVerificationCode('');
         }
     };
-    // Bakiye kontrolü
+    // Balance Check Function
     const checkBalance = async () => {
         try {
             setIsLoading(true);
@@ -676,7 +672,7 @@ const AEChatbot = () => {
         }
     };
 
-    // İşlem geçmişi
+    // Transaction history
     const getTransactionHistory = async () => {
         addMessage('bot-link', {
             text: '📜 View all your transactions in the explorer',
@@ -684,7 +680,7 @@ const AEChatbot = () => {
         });
     };
 
-    // QR kod oluşturma
+    // QR code generation
     const handleQRCodeRequest = () => {
         if (!walletConnected || !userAddress) {
             addMessage('bot', 'Please connect your wallet first to generate QR code.');
@@ -694,12 +690,12 @@ const AEChatbot = () => {
         addMessage('bot', 'Here is your wallet address QR code:');
     };
 
-    // Mesaj ekleme
+    
     const addMessage = (type, content) => {
         setMessages(prev => [...prev, { type, content }]);
     };
 
-    // Kullanıcı mesajını işle
+    // Process user message
     const processUserMessage = (message) => {
         const helpRegex = /^help$|what.+can.+you.+do|what.+are.+your.+features/i;
         const qrCodeRegex = /(?:generate|create|show|get|display)?\s*(?:my)?\s*(?:wallet|address)?\s*(?:qr|qr code)/i;
@@ -868,7 +864,7 @@ const AEChatbot = () => {
                                 </div>
                             </div>
 
-                            {/* Mesaj listesi */}
+                            {/* Message list */}
                             <div className="h-96 overflow-y-auto mb-4 space-y-4 border border-white/10 rounded-lg p-4 backdrop-blur-sm">
                                 {messages.map((message, index) => (
                                     <div
@@ -946,7 +942,7 @@ const AEChatbot = () => {
                                 </div>
                             )}
 
-                            {/* Input formu */}
+                            {/* Input form */}
                             <form onSubmit={handleSubmit} className="flex gap-2">
                                 <Input
                                     value={input}
